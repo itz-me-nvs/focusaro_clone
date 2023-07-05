@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "188897743929",
+    "project_id": "focusaro-clone",
+    "storage_bucket": "focusaro-clone.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:188897743929:android:9da0f5105d3cdd9f80e9e8",
+        "android_client_info": {
+          "package_name": "com.example.focusaro_clone"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "188897743929-nc1h7h14a9eeoc72ve5ng9b2tb4as932.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDEkdXtWUdNZIpn8hh4_Lq7j2FyjEjZSo4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "188897743929-nc1h7h14a9eeoc72ve5ng9b2tb4as932.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

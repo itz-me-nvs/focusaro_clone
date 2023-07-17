@@ -2,8 +2,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:focusaro_clone/src/components/rounded_button.dart';
 import 'package:focusaro_clone/src/config/constants.dart';
-import 'package:focusaro_clone/src/screens/Home/message_list_screen.dart';
 import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
+
+import '../home/message_list_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {
   static const String id = 'Registration_Screen';

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:focusaro_clone/src/screens/Home/settings_screen.dart';
+import 'package:focusaro_clone/src/screens/home/settings_screen.dart';
 import 'package:focusaro_clone/src/screens/onboarding/login_screen.dart';
 import 'package:focusaro_clone/src/screens/onboarding/phone_auth_screen.dart';
 import 'package:focusaro_clone/src/screens/onboarding/welcome_screen.dart';

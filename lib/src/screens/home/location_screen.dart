@@ -175,7 +175,6 @@ class _LocationScreenState extends State<LocationScreen> {
         backgroundColor: switchValue ? Colors.black : Colors.white,
         appBar: AppBar(
           backgroundColor: Colors.blue,
-          brightness: Brightness.dark,
           elevation: 8,
           title: const Padding(
             padding: EdgeInsets.only(

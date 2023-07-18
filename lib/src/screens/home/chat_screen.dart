@@ -1,3 +1,5 @@
+// ignore_for_file: prefer_const_constructors, unnecessary_const
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -7,7 +9,7 @@ final _firestore = FirebaseFirestore.instance;
 late User loggedInUser;
 
 class ChatScreen extends StatefulWidget {
-  static const String id = 'chat_Screen';
+  static const String id = 'chat_screen';
   final String username = '';
 
   const ChatScreen({super.key});
@@ -20,6 +22,8 @@ class _ChatScreenState extends State<ChatScreen> {
   String messageText = '';
   final _auth = FirebaseAuth.instance;
   final _messageTextController = TextEditingController();
+
+  bool isFocusMode = false;
 
   void getCurrentUser() async {
     try {
@@ -51,125 +55,127 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     final Map userInfo = ModalRoute.of(context)!.settings.arguments as Map;
     return Scaffold(
-        appBar: AppBar(
-          title: Text(widget.username),
-        ),
         body: Scaffold(
-          backgroundColor: Colors.black,
-          appBar: AppBar(
-            bottom: const PreferredSize(
-                preferredSize: Size.fromHeight(27.0),
-                child: Padding(padding: EdgeInsets.all(8.0))),
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(
-                bottom: Radius.circular(40),
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        automaticallyImplyLeading: true,
+        actions: <Widget>[
+          IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: () {
+                //Implement logout functionality
+                _auth.signOut();
+                Navigator.pop(context);
+              }),
+        ],
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              userInfo['recieverName'],
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 23.0,
               ),
             ),
-            leading: null,
-            actions: <Widget>[
-              IconButton(
-                  icon: const Icon(Icons.outlet),
-                  onPressed: () {
-                    //Implement logout functionality
-                    _auth.signOut();
-                    Navigator.pop(context);
-                  }),
-            ],
-            title: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  userInfo['recieverName'],
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                FutureBuilder(
-                  future: FirebaseFirestore.instance
-                      .collection('user')
-                      .where('phoneNumber', isEqualTo: userInfo['reciever'])
-                      .get(),
-                  builder: (BuildContext context, AsyncSnapshot snapshot) {
-                    final QuerySnapshot documents = snapshot.data;
-                    dynamic firstDocumentData = documents.docs.first.data();
-                    if (snapshot.hasData) {
-                      return firstDocumentData['focusMode']
-                          ? Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: const [
-                                Text(
-                                  'Focus Mode',
-                                  style: const TextStyle(
-                                      color: Colors.red, fontSize: 15.0),
-                                ),
-                                Text(
-                                  '(Messages Sent are Delayed)',
-                                  style: TextStyle(fontSize: 13.0),
-                                ),
-                              ],
-                            )
-                          : const Text(' ');
-                    }
-                    return const Text(' ');
-                  },
-                ),
-              ],
+            FutureBuilder(
+              future: _firestore
+                  .collection('user')
+                  .where('phoneNumber', isEqualTo: userInfo['reciever'])
+                  .get(),
+              builder: (BuildContext context, AsyncSnapshot snapshot) {
+                final QuerySnapshot documents = snapshot.data;
+                dynamic firstDocumentData = documents.docs.first.data();
+                if (snapshot.hasData) {
+                  isFocusMode = firstDocumentData['focusMode'];
+                  return firstDocumentData['focusMode']
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text(
+                              'Focus Mode',
+                              style: const TextStyle(
+                                  color: Colors.red, fontSize: 15.0),
+                            ),
+                            Text(
+                              '(Messages Sent are Delayed)',
+                              style: TextStyle(fontSize: 13.0),
+                            ),
+                          ],
+                        )
+                      : const Text(
+                          'Online',
+                          style: TextStyle(color: Colors.white70),
+                        );
+                }
+                return const Text(' ');
+              },
             ),
-            backgroundColor: Colors.lightBlueAccent,
-          ),
-          body: SafeArea(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                MessageStream(
-                  userInfo: userInfo,
-                ),
-                Container(
-                  decoration: kMessageContainerDecoration,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Expanded(
-                        child: TextField(
-                          controller: _messageTextController,
-                          onChanged: (value) {
-                            //Do something with the user input.
-                            setState(() {
-                              _messageTextController.text = value;
-                            });
-                          },
-                          decoration: kMessageTextFieldDecoration,
-                        ),
-                      ),
-                      OutlinedButton(
-                        onPressed: () {
-                          _messageTextController.clear();
-                          //Implement send functionality.
-                          _firestore
-                              .collection(userInfo['sender']
-                                          .compareTo(userInfo['reciever']) >
-                                      0
-                                  ? userInfo['reciever'] + userInfo['sender']
-                                  : userInfo['sender'] + userInfo['reciever'])
-                              .add({
-                            'text': messageText,
-                            'sender': userInfo['sender'],
-                            'reciever': userInfo['reciever'],
-                            'timestamp': FieldValue.serverTimestamp()
-                          });
-                        },
-                        child: Text(
-                          'Send',
-                          style: kSendButtonTextStyle.copyWith(
-                              color: Colors.lightBlueAccent[100]),
-                        ),
-                      ),
-                    ],
+          ],
+        ),
+        backgroundColor: Colors.lightBlueAccent,
+      ),
+      body: SafeArea(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            MessageStream(
+              userInfo: userInfo,
+            ),
+            Container(
+              decoration: kMessageContainerDecoration,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  Expanded(
+                    child: TextField(
+                      enabled: !isFocusMode,
+                      controller: _messageTextController,
+                      decoration: kMessageTextFieldDecoration,
+                    ),
                   ),
-                ),
-              ],
+                  OutlinedButton(
+                    onPressed: () {
+                      if (_messageTextController.text.isNotEmpty) {
+                        //Implement send functionality.
+                        _firestore
+                            .collection(userInfo['sender']
+                                        .compareTo(userInfo['reciever']) >
+                                    0
+                                ? userInfo['reciever'] + userInfo['sender']
+                                : userInfo['sender'] + userInfo['reciever'])
+                            .add({
+                          'text': _messageTextController.text,
+                          'sender': userInfo['sender'],
+                          'reciever': userInfo['reciever'],
+                          'timestamp': FieldValue.serverTimestamp()
+                        });
+
+                        // clear the text field after sending the message
+                        _messageTextController.clear();
+                      } else {
+                        // make scaffold messenger
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please enter a message to send'),
+                          ),
+                        );
+                      }
+                    },
+                    child: Text(
+                      'Send',
+                      style: kSendButtonTextStyle.copyWith(
+                          color: Colors.lightBlueAccent[100]),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ));
+          ],
+        ),
+      ),
+    ));
   }
 }
 

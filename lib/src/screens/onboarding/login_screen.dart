@@ -128,7 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     }
                   },
                   color: Colors.lightBlueAccent,
-                  text: 'Continue',
+                  text: '                  ',
                 ),
               ),
             ],

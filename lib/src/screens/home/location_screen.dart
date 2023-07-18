@@ -15,13 +15,20 @@ import 'package:sound_mode/utils/ringer_mode_statuses.dart';
 
 class LocationScreen extends StatefulWidget {
   static const String id = 'location_screen';
-  const LocationScreen({super.key});
+  final String userId;
+  const LocationScreen({super.key, required this.userId});
 
   @override
-  _LocationScreenState createState() => _LocationScreenState();
+  _LocationScreenState createState() => _LocationScreenState(userID: userId);
 }
 
 class _LocationScreenState extends State<LocationScreen> {
+  late String userID;
+
+  _LocationScreenState({required this.userID}) {
+    userID = this.userID;
+  }
+
   String _soundMode = 'Unknown';
   String _permissionStatus = 'Unknown';
 
@@ -78,6 +85,7 @@ class _LocationScreenState extends State<LocationScreen> {
   }
 
   void _saveLocation() {
+    print(userID);
     if (_selectedLocation != null) {
       showDialog(
         context: context,
@@ -89,10 +97,7 @@ class _LocationScreenState extends State<LocationScreen> {
               TextButton(
                 child: Text('OK'),
                 onPressed: () {
-                  _firestore
-                      .collection('user')
-                      .doc('mINhLg007Rc964sto22qNgibQJ92')
-                      .update({
+                  _firestore.collection('user').doc(userID).update({
                     'targetLocations': [
                       {
                         'latitude': _selectedLocation!.latitude,
@@ -166,8 +171,6 @@ class _LocationScreenState extends State<LocationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final String userInfo =
-        ModalRoute.of(context)?.settings.arguments as dynamic ?? '';
     return StreamProvider<UserLocation>(
       create: (context) => LocationService().locationStream,
       initialData: UserLocation(latitude: 0.0, longitude: 0.0, focus: true),

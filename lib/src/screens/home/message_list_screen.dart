@@ -1,3 +1,5 @@
+// ignore_for_file: unnecessary_const, prefer_const_constructors, sort_child_properties_last
+
 import 'dart:math' show cos, sqrt, asin;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -7,12 +9,13 @@ import 'package:flutter/material.dart';
 import 'package:focusaro_clone/src/screens/home/chat_screen.dart';
 import 'package:focusaro_clone/src/screens/home/location_screen.dart';
 import 'package:focusaro_clone/src/utils/services/location_services.dart';
+import 'package:focusaro_clone/src/utils/services/notification_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 final _firestore = FirebaseFirestore.instance;
 
 class MessageListScreen extends StatefulWidget {
-  static const String id = 'home_Screen';
+  static const String id = 'home_screen';
   const MessageListScreen({super.key, phoneNumber});
 
   @override
@@ -38,7 +41,17 @@ class _MessageListScreen extends State<MessageListScreen> {
   @override
   void initState() {
     super.initState();
-    // getPermissions();
+    getPermissions();
+    scheduleNotification();
+  }
+
+  scheduleNotification() {
+    NotificationService.scheduleNotification(6, 30, handleScheduledAction);
+  }
+
+  void handleScheduledAction() {
+    // Perform your desired action here when the scheduled time has exceeded
+    print('Performing action...');
   }
 
   getPermissions() async {
@@ -60,41 +73,52 @@ class _MessageListScreen extends State<MessageListScreen> {
   getAllContacts() async {
     List colors = [Colors.green, Colors.indigo, Colors.yellow, Colors.orange];
     int colorIndex = 0;
-    List<Contact> contacts = (await ContactsService.getContacts()).toList();
-    print('contact list $contacts');
+    // List<Contact> contacts = (await ContactsService.getContacts()).toList();
+    // print('contact list $contacts');
 
-    for (var contact in contacts) {
-      try {
-        _firestore
-            .collection('user')
-            .where(
-              'phoneNumber',
-              isEqualTo: contact.phones?.first.value
-                  ?.replaceAll(' ', '')
-                  .replaceAll('+91', ''),
-            )
-            .get()
-            .then((value) => value.docs.forEach((element) {
-                  if (element['phoneNumber'] != null) {
-                    user.add(contact);
-                  }
-                }));
-      } catch (e) {
-        print(e);
-      }
+// isEqualTo: contact.phones?.first.value
+//                   ?.replaceAll(' ', '')
+//                   .replaceAll('+91', ''),
 
-      /* Setting a random color if contact does not have one */
-      Color baseColor = colors[colorIndex];
-      contactsColorMap[contact.displayName!] = baseColor;
-      colorIndex++;
-      if (colorIndex == colors.length) {
-        colorIndex = 0;
-      }
+    // for (var contact in contacts) {
+    try {
+      _firestore
+          .collection('user')
+          .where('phoneNumber', isEqualTo: '9961542144')
+          .get()
+          .then((value) => value.docs.forEach((element) {
+                Map<String, dynamic> userDetails = element.data();
+                print(element.data());
+                if (userDetails['phoneNumber'] != null) {
+                  print(userDetails["phoneNumber"]);
+                  user.add(Contact(
+                    displayName: userDetails['userName'],
+                    phones: [
+                      Item(
+                        label: 'mobile',
+                        value: userDetails['phoneNumber'],
+                      )
+                    ],
+                  ));
+
+                  setState(() {
+                    print('user list $user');
+                    contacts = user;
+                    // print('length ${contacts.length}');
+                  });
+                }
+              }));
+    } catch (e) {
+      print(e);
     }
 
-    setState(() {
-      contacts = user;
-    });
+    /* Setting a random color if contact does not have one */
+    Color baseColor = colors[colorIndex];
+    contactsColorMap[contacts[0].displayName!] = baseColor;
+    colorIndex++;
+    if (colorIndex == colors.length) {
+      colorIndex = 0;
+    }
   }
 
   filterContacts() {
@@ -135,34 +159,32 @@ class _MessageListScreen extends State<MessageListScreen> {
     final String phoneNumber = data['phoneNumber'];
     final String userID = data['userID'];
     bool isSearching = searchController.text.isNotEmpty;
-    bool listItemsExist = (contactsFiltered.length > 0 || contacts.length > 0);
+    bool listItemsExist = false;
 
     return Scaffold(
         backgroundColor: focusMode ? Colors.black : Colors.white,
-        floatingActionButton: FloatingActionButton(
-          child: const Icon(Icons.location_on),
-          onPressed: () {
-            Navigator.pushNamed(context, LocationScreen.id,
-                arguments: data['userId']);
-          },
-        ),
+        floatingActionButton: focusMode
+            ? null
+            : FloatingActionButton(
+                child: const Icon(Icons.location_on),
+                onPressed: () {
+                  Navigator.pushNamed(context, LocationScreen.id,
+                      arguments: data['userId']);
+                },
+              ),
         appBar: AppBar(
           backgroundColor: Colors.blue,
+          automaticallyImplyLeading: false,
           bottom: const PreferredSize(
               child: Padding(padding: EdgeInsets.all(8.0)),
               preferredSize: Size.fromHeight(27.0)),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(
-              bottom: Radius.circular(40),
-            ),
-          ),
-          title: Padding(
+          title: const Padding(
             padding: const EdgeInsets.only(
               right: 20.0,
               top: 20.0,
               left: 20.0,
             ),
-            child: Text(
+            child: const Text(
               'Inbox',
               style: TextStyle(
                 fontSize: 23.0,
@@ -184,24 +206,14 @@ class _MessageListScreen extends State<MessageListScreen> {
                     // print(value);
                     focusMode = value;
                   });
+
+                  // firebase code to update focus mode
+                  _firestore
+                      .collection('user')
+                      .doc(userID)
+                      .update({'focusMode': value});
                 },
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(
-                right: 20.0,
-                top: 20.0,
-                left: 20.0,
-              ),
-              child: GestureDetector(
-                  child: const Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                ),
-                child: Icon(
-                  Icons.refresh,
-                ),
-              )),
             ),
           ],
         ),
@@ -211,7 +223,7 @@ class _MessageListScreen extends State<MessageListScreen> {
           contactsColorMap: contactsColorMap,
           contactsFiltered: contactsFiltered,
           isSearching: isSearching,
-          listItemsExist: listItemsExist,
+          listItemsExist: (contacts.length > 0),
           phoneNumber: phoneNumber,
           changeFocusMode: changeFocusMode,
           isFocusMode: focusMode,
@@ -293,6 +305,14 @@ class _BodyState extends State<Body> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    print('at body state');
+    print(widget.listItemsExist);
+    // getdata(widget.userId, widget.current);
+  }
+
+  @override
   Widget build(BuildContext context) {
     // var userLocation = Provider.of<UserLocation>(context);
     // print(userLocation.latitude.toString() + 'Bello');
@@ -338,7 +358,7 @@ class _BodyState extends State<Body> {
                         border: new OutlineInputBorder(
                             borderRadius:
                                 BorderRadius.all(Radius.circular(50.0)),
-                            borderSide: new BorderSide(
+                            borderSide: const BorderSide(
                               color: Colors.blue,
                             )),
                         prefixIcon: Icon(Icons.search, color: Colors.blue)),
@@ -363,8 +383,11 @@ class _BodyState extends State<Body> {
                                 widget.contactsColorMap[contact.displayName]
                                     as dynamic;
 
-                            Color color1 = baseColor[800];
-                            Color color2 = baseColor[400];
+                            // Color color1 = baseColor[800];
+                            // Color color2 = baseColor[400];
+
+                            Color color1 = Colors.red;
+                            Color color2 = Colors.blue;
                             return GestureDetector(
                               onTap: () {
                                 Navigator.pushNamed(context, ChatScreen.id,

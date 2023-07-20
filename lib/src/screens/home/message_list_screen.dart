@@ -1,4 +1,4 @@
-// ignore_for_file: unnecessary_const, prefer_const_constructors, sort_child_properties_last
+// ignore_for_file: unnecessary_const, prefer_const_constructors, sort_child_properties_last, unnecessary_new
 
 import 'dart:math' show cos, sqrt, asin;
 
@@ -12,17 +12,18 @@ import 'package:focusaro_clone/src/utils/services/location_services.dart';
 import 'package:focusaro_clone/src/utils/services/notification_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-final _firestore = FirebaseFirestore.instance;
-
 class MessageListScreen extends StatefulWidget {
   static const String id = 'home_screen';
-  const MessageListScreen({super.key, phoneNumber});
+  final String phoneNumber = '9961542144';
+  final String userID = 'mINhLg007Rc964sto22qNgibQJ92';
+  const MessageListScreen({super.key});
 
   @override
   _MessageListScreen createState() => _MessageListScreen();
 }
 
 class _MessageListScreen extends State<MessageListScreen> {
+  final _firestore = FirebaseFirestore.instance;
   List<Contact> contacts = [];
   List<Contact> contactsFiltered = [];
   String photoUrl = '';
@@ -46,7 +47,7 @@ class _MessageListScreen extends State<MessageListScreen> {
   }
 
   scheduleNotification() {
-    NotificationService.scheduleNotification(6, 30, handleScheduledAction);
+    NotificationService.scheduleNotification(19, 18, handleScheduledAction);
   }
 
   void handleScheduledAction() {
@@ -153,13 +154,14 @@ class _MessageListScreen extends State<MessageListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final Map<dynamic, dynamic> data =
-        ModalRoute.of(context)?.settings.arguments as dynamic;
+    // get user details from modalRoute
 
-    final String phoneNumber = data['phoneNumber'];
-    final String userID = data['userID'];
+    final dynamic userDetails =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+
+    final String phoneNumber = userDetails['phoneNumber'];
+    final String userID = userDetails['userID'];
     bool isSearching = searchController.text.isNotEmpty;
-    bool listItemsExist = false;
 
     return Scaffold(
         backgroundColor: focusMode ? Colors.black : Colors.white,
@@ -169,7 +171,7 @@ class _MessageListScreen extends State<MessageListScreen> {
                 child: const Icon(Icons.location_on),
                 onPressed: () {
                   Navigator.pushNamed(context, LocationScreen.id,
-                      arguments: data['userId']);
+                      arguments: {'userID': widget.userID});
                 },
               ),
         appBar: AppBar(
@@ -293,7 +295,7 @@ class _BodyState extends State<Body> {
         widget.changeFocusMode(true);
       } else {
         widget.changeFocusMode(false);
-        _firestore.collection('user').doc(id).update({
+        FirebaseFirestore.instance.collection('user').doc(id).update({
           'focusLocation': [0, 0],
           'focusMode': false,
         });
@@ -379,9 +381,9 @@ class _BodyState extends State<Body> {
                                 ? widget.contactsFiltered[index]
                                 : widget.contacts[index];
 
-                            var baseColor =
-                                widget.contactsColorMap[contact.displayName]
-                                    as dynamic;
+                            // var baseColor =
+                            //     widget.contactsColorMap[contact.displayName]
+                            //         as dynamic;
 
                             // Color color1 = baseColor[800];
                             // Color color2 = baseColor[400];

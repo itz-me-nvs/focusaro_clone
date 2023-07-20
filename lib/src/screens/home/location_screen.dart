@@ -15,19 +15,16 @@ import 'package:sound_mode/utils/ringer_mode_statuses.dart';
 
 class LocationScreen extends StatefulWidget {
   static const String id = 'location_screen';
-  final String userId;
-  const LocationScreen({super.key, required this.userId});
+  final String userId = 'mINhLg007Rc964sto22qNgibQJ92';
+  // required this.userId
+  const LocationScreen({super.key});
 
   @override
-  _LocationScreenState createState() => _LocationScreenState(userID: userId);
+  _LocationScreenState createState() => _LocationScreenState();
 }
 
 class _LocationScreenState extends State<LocationScreen> {
   late String userID;
-
-  _LocationScreenState({required this.userID}) {
-    userID = this.userID;
-  }
 
   String _soundMode = 'Unknown';
   String _permissionStatus = 'Unknown';
@@ -171,6 +168,10 @@ class _LocationScreenState extends State<LocationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final dynamic userDetails =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    print('route params $userDetails');
+    userID = userDetails['userID'];
     return StreamProvider<UserLocation>(
       create: (context) => LocationService().locationStream,
       initialData: UserLocation(latitude: 0.0, longitude: 0.0, focus: true),

@@ -116,7 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         MessageListScreen.id,
                         arguments: {
                           'phoneNumber': data['phoneNumber'],
-                          'userID': data['userId']
+                          'userID': data['userId'],
                         },
                       );
 

@@ -24,6 +24,14 @@
                 android:name="com.google.android.geo.API_KEY"
                 android:value="YOUR_GEO_API_KEY HERE"
             />
+
+
+            <!-- Time Notification Channel Id and Channel Name-->
+            <meta-data android:name="flutter_local_notifications.default_notification_channel_id"
+                android:value="time_channel_ID" />
+
+                  <meta-data android:name="flutter_local_notifications.default_notification_channel_name"
+                android:value="time_channel_name" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

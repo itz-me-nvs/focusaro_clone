@@ -27,7 +27,6 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
 
   Future<void> _verifyPhoneNumber(BuildContext context) async {
     final String phoneNumber = _phoneNumberController.text;
-
     await _auth.verifyPhoneNumber(
         phoneNumber: '+91$phoneNumber',
         verificationCompleted: (PhoneAuthCredential credential) async {

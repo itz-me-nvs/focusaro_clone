@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "188897743929-755198mv261slml87q9jphr332qpoppr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.focusaro_clone",
+            "certificate_hash": "6ad15d64ec40485b8919f22f3e03d1130928ca17"
+          }
+        },
+        {
           "client_id": "188897743929-nc1h7h14a9eeoc72ve5ng9b2tb4as932.apps.googleusercontent.com",
           "client_type": 3
         }

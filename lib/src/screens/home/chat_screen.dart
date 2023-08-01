@@ -4,9 +4,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:focusaro_clone/src/config/constants.dart';
+import 'package:focusaro_clone/src/utils/providers/auth_provider.dart';
+import 'package:provider/provider.dart';
 
 final _firestore = FirebaseFirestore.instance;
-late User loggedInUser;
+// late User loggedInUser;
 
 class ChatScreen extends StatefulWidget {
   static const String id = 'chat_screen';
@@ -25,25 +27,25 @@ class _ChatScreenState extends State<ChatScreen> {
 
   bool isFocusMode = false;
 
-  void getCurrentUser() async {
-    try {
-      final user = _auth.currentUser;
-      if (user != null) {
-        loggedInUser = user;
-        print(loggedInUser.phoneNumber);
-      }
-    } catch (e) {
-      print(e);
-    }
-    print(loggedInUser.phoneNumber);
-  }
+  // void getCurrentUser() async {
+  //   try {
+  //     final user = _auth.currentUser;
+  //     if (user != null) {
+  //       loggedInUser = user;
+  //       print(loggedInUser.phoneNumber);
+  //     }
+  //   } catch (e) {
+  //     print(e);
+  //   }
+  //   print(loggedInUser.phoneNumber);
+  // }
 
   @override
   void initState() {
     // ignore: todo
     // TODO: implement initState
     super.initState();
-    getCurrentUser();
+    // getCurrentUser();
   }
 
   @override
@@ -53,7 +55,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final Map userInfo = ModalRoute.of(context)!.settings.arguments as Map;
+    final dynamic userInfo =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    print(userInfo);
     return Scaffold(
         body: Scaffold(
       backgroundColor: Colors.white,
@@ -62,17 +66,20 @@ class _ChatScreenState extends State<ChatScreen> {
         actions: <Widget>[
           IconButton(
               icon: const Icon(Icons.logout),
-              onPressed: () {
+              onPressed: () async {
                 //Implement logout functionality
-                _auth.signOut();
-                Navigator.pop(context);
+                // _auth.signOut();
+                AuthProvider authProvider =
+                    Provider.of<AuthProvider>(context, listen: false);
+                // await authProvider.logout();
+                // Navigator.pop(context);
               }),
         ],
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              userInfo['recieverName'],
+              userInfo['receiverName'] ?? '',
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 23.0,
@@ -81,32 +88,39 @@ class _ChatScreenState extends State<ChatScreen> {
             FutureBuilder(
               future: _firestore
                   .collection('user')
-                  .where('phoneNumber', isEqualTo: userInfo['reciever'])
+                  .where('phoneNumber', isEqualTo: userInfo['receiver'])
                   .get(),
               builder: (BuildContext context, AsyncSnapshot snapshot) {
-                final QuerySnapshot documents = snapshot.data;
-                dynamic firstDocumentData = documents.docs.first.data();
-                if (snapshot.hasData) {
-                  isFocusMode = firstDocumentData['focusMode'];
-                  return firstDocumentData['focusMode']
-                      ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text(
-                              'Focus Mode',
-                              style: const TextStyle(
-                                  color: Colors.red, fontSize: 15.0),
-                            ),
-                            Text(
-                              '(Messages Sent are Delayed)',
-                              style: TextStyle(fontSize: 13.0),
-                            ),
-                          ],
-                        )
-                      : const Text(
-                          'Online',
-                          style: TextStyle(color: Colors.white70),
-                        );
+                if (snapshot.connectionState == ConnectionState.done &&
+                    snapshot.hasData &&
+                    snapshot.data != null) {
+                  final QuerySnapshot documents = snapshot.data;
+
+                  dynamic firstDocumentData = documents.docs.first.data();
+                  print(firstDocumentData['focusMode']);
+                  if (snapshot.hasData) {
+                    isFocusMode = firstDocumentData['focusMode'] ?? false;
+                    return isFocusMode
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text(
+                                'Focus Mode',
+                                style: const TextStyle(
+                                    color: Colors.red, fontSize: 15.0),
+                              ),
+                              Text(
+                                '(Messages Sent are Delayed)',
+                                style: TextStyle(fontSize: 13.0),
+                              ),
+                            ],
+                          )
+                        : const Text(
+                            'Online',
+                            style: TextStyle(color: Colors.white70),
+                          );
+                  }
+                  return const Text(' ');
                 }
                 return const Text(' ');
               },
@@ -141,14 +155,14 @@ class _ChatScreenState extends State<ChatScreen> {
                         //Implement send functionality.
                         _firestore
                             .collection(userInfo['sender']
-                                        .compareTo(userInfo['reciever']) >
+                                        .compareTo(userInfo['receiver']) >
                                     0
-                                ? userInfo['reciever'] + userInfo['sender']
-                                : userInfo['sender'] + userInfo['reciever'])
+                                ? userInfo['receiver'] + userInfo['sender']
+                                : userInfo['sender'] + userInfo['receiver'])
                             .add({
                           'text': _messageTextController.text,
                           'sender': userInfo['sender'],
-                          'reciever': userInfo['reciever'],
+                          'receiver': userInfo['receiver'],
                           'timestamp': FieldValue.serverTimestamp()
                         });
 
@@ -190,9 +204,9 @@ class MessageStream extends StatelessWidget {
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
         stream: _firestore
-            .collection(userInfo['sender'].compareTo(userInfo['reciever']) > 0
-                ? userInfo['reciever'] + userInfo['sender']
-                : userInfo['sender'] + userInfo['reciever'])
+            .collection(userInfo['sender'].compareTo(userInfo['receiver']) > 0
+                ? userInfo['receiver'] + userInfo['sender']
+                : userInfo['sender'] + userInfo['receiver'])
             .orderBy('timestamp', descending: false)
             .snapshots(),
         builder: (context, snapshot) {

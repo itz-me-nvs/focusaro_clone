@@ -1,10 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:focusaro_clone/src/components/rounded_button.dart';
+import 'package:focusaro_clone/src/utils/functions/global_functions.dart';
+import 'package:focusaro_clone/src/utils/providers/auth_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   static const String id = 'settings_screen';
-  SettingsScreen({Key? key}) : super(key: key);
+  const SettingsScreen({Key? key}) : super(key: key);
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -14,32 +16,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
   List<TimeOfDay> selectedTimes = [];
   FirebaseFirestore firestore = FirebaseFirestore.instance;
 
+  AuthProvider _authProvider = AuthProvider();
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    fetchTimesFromFirebase();
   }
 
-  fetchTimesFromFirebase() {
-    final DocumentReference userRef =
-        firestore.collection('user').doc('mINhLg007Rc964sto22qNgibQJ92');
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final dynamic userDetails =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    print('user details $userDetails');
+    fetchTimesFromFirebase(userDetails['userID']);
+  }
+
+  fetchTimesFromFirebase(String userID) {
+    selectedTimes = [];
+    final DocumentReference userRef = firestore.collection('user').doc(userID);
     userRef.get().then((DocumentSnapshot snapshot) {
       if (snapshot.exists) {
-        final data = snapshot.data();
+        final dynamic data = snapshot.data();
         print(data);
-        final List<dynamic> timeData = [];
+        final List<dynamic> timeData = data['focusModeTimes'] ?? [];
 
         timeData.forEach((time) {
-          print('times - ${time.toString()}');
-          // Parse the time from Firestore data and add to the selectedTimes list
-          final List<String> timeParts = time.split(':');
-          final int hour = int.parse(timeParts[0]);
-          final int minute = int.parse(timeParts[1]);
-
-          final TimeOfDay timeOfDay = TimeOfDay(hour: hour, minute: minute);
           setState(() {
-            selectedTimes.add(timeOfDay);
+            selectedTimes.add(convertTimeOfDay(time));
           });
         });
       } else {
@@ -52,6 +57,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final dynamic userDetails =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
     return Scaffold(
         appBar: AppBar(
           title: const Text('Focus Mode Time Settings'),
@@ -67,16 +74,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   );
 
                   if (time != null) {
+                    print(time);
+                    print(selectedTimes);
+                    // selectedTimes.add(time);
                     setState(() {
                       selectedTimes.add(time);
-
-                      firestore
-                          .collection('user')
-                          .doc('mINhLg007Rc964sto22qNgibQJ92')
-                          .update({
-                        'focusModeTimes':
-                            selectedTimes.map((e) => e.format(context)).toList()
-                      });
+                    });
+                    firestore
+                        .collection('user')
+                        .doc(userDetails['userID'])
+                        .update({
+                      'focusModeTimes':
+                          selectedTimes.map((e) => e.format(context)).toList()
                     });
                   }
                 },
@@ -94,7 +103,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           selectedTimes.removeAt(index);
                           firestore
                               .collection('user')
-                              .doc('mINhLg007Rc964sto22qNgibQJ92')
+                              .doc(userDetails['userID'])
                               .update({
                             'focusModeTimes': selectedTimes
                                 .map((e) => e.format(context))

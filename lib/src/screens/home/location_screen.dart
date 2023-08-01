@@ -4,19 +4,15 @@ import 'dart:io' show Platform;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:focusaro_clone/src/utils/services/location_services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:provider/provider.dart';
 import 'package:sound_mode/permission_handler.dart';
 import 'package:sound_mode/sound_mode.dart';
-import 'package:sound_mode/utils/ringer_mode_statuses.dart';
 
 class LocationScreen extends StatefulWidget {
   static const String id = 'location_screen';
-  final String userId = 'mINhLg007Rc964sto22qNgibQJ92';
-  // required this.userId
   const LocationScreen({super.key});
 
   @override
@@ -33,6 +29,7 @@ class _LocationScreenState extends State<LocationScreen> {
   static bool switchValue = false;
   final Location _locationTracker = Location();
   final _firestore = FirebaseFirestore.instance;
+  List<dynamic> updatedTargetLocations = [];
   Set<Marker> _markers = {};
 
   Circle circle = const Circle(
@@ -93,20 +90,31 @@ class _LocationScreenState extends State<LocationScreen> {
             actions: <Widget>[
               TextButton(
                 child: Text('OK'),
-                onPressed: () {
-                  _firestore.collection('user').doc(userID).update({
-                    'targetLocations': [
-                      {
-                        'latitude': _selectedLocation!.latitude,
-                        'longitude': _selectedLocation!.longitude,
-                      }
-                    ]
-                  });
-                  Navigator.of(context).pop();
+                onPressed: () async {
+                  var userRef =
+                      await _firestore.collection('user').doc(userID).get();
+                  // Check if the user document exists and contains the targetLocations array
+                  if (userRef.exists &&
+                      userRef.data()!.containsKey('focusLocation')) {
+                    updatedTargetLocations = List<Map<String, dynamic>>.from(
+                        userRef.data()!['focusLocation']);
 
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Location saved to Firestore')),
-                  );
+                    // Add the new location to the array
+                    updatedTargetLocations.add({
+                      'latitude': _selectedLocation!.latitude,
+                      'longitude': _selectedLocation!.longitude,
+                    });
+
+                    // Update the user document
+                    await _firestore.collection('user').doc(userID).update({
+                      'focusLocation': updatedTargetLocations,
+                    });
+                    Navigator.of(context).pop();
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Location saved to Firestore')),
+                    );
+                  }
                 },
               ),
               TextButton(
@@ -174,7 +182,8 @@ class _LocationScreenState extends State<LocationScreen> {
     userID = userDetails['userID'];
     return StreamProvider<UserLocation>(
       create: (context) => LocationService().locationStream,
-      initialData: UserLocation(latitude: 0.0, longitude: 0.0, focus: true),
+      initialData: UserLocation(
+          latitude: 11.2578774, longitude: 75.9707169, focus: true),
       child: Scaffold(
         backgroundColor: switchValue ? Colors.black : Colors.white,
         appBar: AppBar(
@@ -203,17 +212,11 @@ class _LocationScreenState extends State<LocationScreen> {
                   // print(value);
                   switchValue = value;
                   if (switchValue) {
-                    _firestore
-                        .collection('user')
-                        .doc('mINhLg007Rc964sto22qNgibQJ92')
-                        .update({
+                    _firestore.collection('user').doc(userID).update({
                       'focusMode': true,
                     });
                   } else {
-                    _firestore
-                        .collection('user')
-                        .doc('mINhLg007Rc964sto22qNgibQJ92')
-                        .update({
+                    _firestore.collection('user').doc(userID).update({
                       'focusMode': false,
                     });
                   }
@@ -222,8 +225,12 @@ class _LocationScreenState extends State<LocationScreen> {
             ),
             IconButton(
                 icon: const Icon(Icons.settings, size: 30.0),
-                onPressed: () =>
-                    {Navigator.of(context).pushNamed('settings_screen')}),
+                onPressed: () => {
+                      Navigator.of(context)
+                          .pushNamed('settings_screen', arguments: {
+                        'userID': userID,
+                      })
+                    }),
           ],
         ),
         body: GoogleMap(
@@ -244,52 +251,5 @@ class _LocationScreenState extends State<LocationScreen> {
             : null,
       ),
     );
-  }
-
-  Future<void> setSilentMode() async {
-    String message;
-
-    try {
-      message =
-          (await SoundMode.setSoundMode(RingerModeStatus.silent)) as String;
-
-      setState(() {
-        _soundMode = message;
-      });
-    } on PlatformException {
-      print('Do Not Disturb access permissions required!');
-    }
-  }
-
-  Future<void> setNormalMode() async {
-    String message;
-
-    try {
-      message = await SoundMode.setSoundMode(RingerModeStatus.normal) as String;
-      setState(() {
-        _soundMode = message;
-      });
-    } on PlatformException {
-      print('Do Not Disturb access permissions required!');
-    }
-  }
-
-  Future<void> setVibrateMode() async {
-    String message;
-
-    try {
-      message =
-          await SoundMode.setSoundMode(RingerModeStatus.vibrate) as String;
-
-      setState(() {
-        _soundMode = message;
-      });
-    } on PlatformException {
-      print('Do Not Disturb access permissions required!');
-    }
-  }
-
-  Future<void> openDoNotDisturbSettings() async {
-    await PermissionHandler.openDoNotDisturbSetting();
   }
 }

@@ -39,7 +39,7 @@ class App extends StatelessWidget {
               'home_screen': (context) => const MessageListScreen(),
               'chat_screen': (context) => const ChatScreen(),
               'location_screen': (context) => const LocationScreen(),
-              'settings_screen': (context) => SettingsScreen(),
+              'settings_screen': (context) => const SettingsScreen(),
             },
 
             // onGenerateRoute: (settings) {
